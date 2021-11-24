@@ -8,7 +8,6 @@ import { plugin as tsPlugin } from '../../typescript/src/index';
 import { plugin as tsDocumentsPlugin } from '../../operations/src/index';
 import { DocumentMode } from '@graphql-codegen/visitor-plugin-common';
 import { extract } from 'jest-docblock';
-
 describe('React Apollo', () => {
   let spyConsoleError: jest.SpyInstance;
   beforeEach(() => {
@@ -1543,7 +1542,6 @@ export function useListenToCommentsSubscription(baseOptions?: Apollo.Subscriptio
           outputFile: 'graphql.tsx',
         }
       )) as Types.ComplexPluginOutput;
-
       expect(content.prepend).toContain(`import * as Apollo from '@apollo/client';`);
       expect(content.content).toContain(
         `export type TestQueryResult = Apollo.QueryResult<TestQuery, TestQueryVariables>;`
@@ -1583,6 +1581,36 @@ export function useListenToCommentsSubscription(baseOptions?: Apollo.Subscriptio
 
       expect(content.prepend).toContain(`import * as Apollo from '@apollo/client';`);
       expect(content.content).toContain(`export type TestMutationResult = Apollo.MutationResult<TestMutation>;`);
+      await validateTypeScript(content, schema, docs, {});
+    });
+    it('should NOT generate descriptions if disableDescriptions is true', async () => {
+      const docs = [{ location: '', document: mutationDoc }];
+
+      const content = (await plugin(
+        schema,
+        docs,
+        { ...config, disableDescriptions: true },
+        {
+          outputFile: 'graphql.tsx',
+        }
+      )) as Types.ComplexPluginOutput;
+      expect(content.content).not.toContain(
+        'Vote on a repository submission, returns the submission that was voted on'
+      );
+      await validateTypeScript(content, schema, docs, {});
+    });
+    it('should generate descriptions', async () => {
+      const docs = [{ location: '', document: mutationDoc }];
+
+      const content = (await plugin(
+        schema,
+        docs,
+        { ...config },
+        {
+          outputFile: 'graphql.tsx',
+        }
+      )) as Types.ComplexPluginOutput;
+      expect(content.content).toContain('Vote on a repository submission, returns the submission that was voted on');
       await validateTypeScript(content, schema, docs, {});
     });
 
